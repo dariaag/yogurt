@@ -13,17 +13,18 @@ use axum::{response::Redirect, Form};
 use crate::{
     auth::auth::{Credentials, DbBackend},
     models::{
-        studio::Studio,
+        studio::{NewStudio, Studio},
         user::{NewUser, User},
     },
 };
 
 #[debug_handler]
-pub async fn get_all_studios_handler(pool: Extension<Arc<PgPool>>) -> impl IntoResponse {
-    let studios = Studio::find_all(&pool).await;
-    let empty_vec: Vec<Studio> = vec![];
-    match studios {
-        Ok(studios) => (StatusCode::OK, Json(studios)),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(empty_vec)),
+pub async fn add_studio_handler(
+    pool: Extension<Arc<PgPool>>,
+    extract::Json(payload): extract::Json<NewStudio>,
+) -> impl IntoResponse {
+    match Studio::create(payload, &pool).await {
+        Ok(_) => (StatusCode::CREATED, "Studio created successfully"),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Studio creation failed"),
     }
 }

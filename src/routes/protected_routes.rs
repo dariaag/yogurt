@@ -1,3 +1,5 @@
+use crate::auth::auth::DbBackend;
+use crate::handlers::user_handlers;
 use axum::{
     routing::{get, post},
     Router,
@@ -7,8 +9,6 @@ use axum_login::{
     tower_sessions::{MemoryStore, SessionManagerLayer},
     AuthManagerLayerBuilder,
 };
-
-use crate::{auth::auth::DbBackend, handlers::login};
 
 pub fn protected_routes(shared_pool: std::sync::Arc<sqlx::Pool<sqlx::Postgres>>) -> Router {
     let session_store = MemoryStore::default();
@@ -24,7 +24,7 @@ pub fn protected_routes(shared_pool: std::sync::Arc<sqlx::Pool<sqlx::Postgres>>)
             get(|| async { "Gotta be logged in to see me!" }),
         )
         .route_layer(login_required!(DbBackend, login_url = "/login"))
-        .route("/login", post(login))
+        .route("/login", post(user_handlers::login))
         .route("/login", get(login_get))
         .layer(auth_layer)
 }

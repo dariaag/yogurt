@@ -21,6 +21,8 @@ pub struct Credentials {
     pub user_id: i32,
 }
 
+type AuthSession = axum_login::AuthSession<DbBackend>;
+
 #[async_trait]
 impl AuthnBackend for DbBackend {
     type User = User;
