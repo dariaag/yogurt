@@ -5,7 +5,7 @@ use axum_login::{
 };
 use dotenv::dotenv;
 
-use heyo::routes::{self, admin_routes, protected_routes, public_routes};
+use heyo::routes::{self, admin_routes, protected_routes, public_routes, studio_owner_routes};
 use sqlx::postgres::PgPoolOptions;
 use std::{env, sync::Arc};
 use tower::make::Shared;
@@ -35,7 +35,8 @@ async fn main() {
     let shared_pool = Arc::new(pool);
     let app = Router::new()
         .merge(public_routes::public_routes()) // Merge user-related routes
-        .merge(admin_routes::admin_routes())
+        .merge(studio_owner_routes::studio_owner_routes()) // Merge studio owner-related routes
+        .merge(admin_routes::admin_routes()) // Merge admin-related routes
         .merge(protected_routes::protected_routes(shared_pool.clone())) // Merge admin-related routes
         .route("/", get(root_handler)) // Main root route
         .layer(Extension(shared_pool));

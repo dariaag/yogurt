@@ -25,9 +25,5 @@ pub fn protected_routes(shared_pool: std::sync::Arc<sqlx::Pool<sqlx::Postgres>>)
         )
         .route_layer(login_required!(DbBackend, login_url = "/login"))
         .route("/login", post(user_handlers::login))
-        .route("/login", get(login_get))
         .layer(auth_layer)
-}
-async fn login_get() -> &'static str {
-    "You're logged in!"
 }

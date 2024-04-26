@@ -6,7 +6,7 @@ use crate::utils::serialize_dt::serialize_dt;
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 pub struct Studio {
-    id: i32,
+    studio_id: i32,
     owner_id: i32,
     name: String,
     description: Option<String>,
@@ -28,7 +28,7 @@ pub struct NewStudio {
 impl Studio {
     pub async fn create(new_studio: NewStudio, pool: &PgPool) -> Result<Studio, sqlx::Error> {
         let mut tx = pool.begin().await?;
-        let studio = sqlx::query_as::<_, Studio>("INSERT INTO studios (owner_id, name, description, address, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id, owner_id, name, description, address, phone, created_at")
+        let studio = sqlx::query_as::<_, Studio>("INSERT INTO studios (owner_id, name, description, address, phone) VALUES ($1, $2, $3, $4, $5) RETURNING studio_id, owner_id, name, description, address, phone, created_at")
             .bind(&new_studio.owner_id)
             .bind(&new_studio.name)
             .bind(&new_studio.description)

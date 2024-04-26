@@ -16,7 +16,7 @@ pub struct NewUser {
 }
 #[derive(Debug, FromRow, Serialize, Deserialize, Clone)]
 pub struct User {
-    id: i32,
+    pub id: i32,
     username: String,
     email: String,
     password: String,
