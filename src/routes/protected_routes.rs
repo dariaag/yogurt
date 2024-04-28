@@ -17,5 +17,6 @@ pub fn protected_routes() -> Router {
             "/protected",
             get(|| async { "Gotta be logged in to see me!" }),
         )
-    //.route_layer(login_required!(DbBackend, login_url = "/login"))
+        .route("/logged_in", get(|| async { "Logged in!" }))
+        .route_layer(login_required!(DbBackend, login_url = "/login"))
 }

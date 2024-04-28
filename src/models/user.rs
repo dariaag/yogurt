@@ -68,6 +68,19 @@ impl User {
     }
 }
 
+impl Default for User {
+    fn default() -> Self {
+        User {
+            id: 0,
+            username: "".to_string(),
+            email: "".to_string(),
+            password: "".to_string(),
+            role: "".to_string(),
+            created_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
+        }
+    }
+}
+
 impl AuthUser for User {
     type Id = i32;
 

@@ -30,16 +30,13 @@ pub async fn delete_all_users_handler(pool: Extension<Arc<PgPool>>) -> impl Into
 }
 
 #[debug_handler]
-pub async fn add_user_handler(
+pub async fn get_user_by_id_handler(
+    extract::Path(id): extract::Path<i32>,
     pool: Extension<Arc<PgPool>>,
-    extract::Json(payload): extract::Json<NewUser>,
 ) -> impl IntoResponse {
-    match User::create(payload, &pool).await {
-        Ok(_) => (StatusCode::CREATED, "User created successfully"),
-        Err(e) => {
-            println!("{:?}", e.to_string());
-            (StatusCode::INTERNAL_SERVER_ERROR, "User creation failed")
-        }
+    match User::find_by_id(id, &pool).await {
+        Ok(user) => (StatusCode::OK, Json(user)),
+        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(User::default())),
     }
 }
 

@@ -4,8 +4,10 @@ use axum_login::{
     AuthManagerLayerBuilder,
 };
 use dotenv::dotenv;
-use heyo::auth::auth::DbBackend;
-use heyo::routes::{self, admin_routes, protected_routes, public_routes, studio_owner_routes};
+use heyo::routes::{
+    self, admin_routes, protected_routes, public_routes, studio_owner_routes, user_routes,
+};
+use heyo::{auth::auth::DbBackend, models::user};
 use sqlx::postgres::PgPoolOptions;
 use std::{env, sync::Arc};
 use tower::{layer, make::Shared};
@@ -44,7 +46,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .merge(public_routes::public_routes()) // Merge user-related routes
         .merge(studio_owner_routes::studio_owner_routes()) // Merge studio owner-related routes
         .merge(admin_routes::admin_routes()) // Merge admin-related routes
-        //.merge(protected_routes::protected_routes()) // Merge admin-related routes
+        .merge(protected_routes::protected_routes()) // Merge admin-related routes
+        .merge(user_routes::user_routes())
         .route("/", get(root_handler)) // Main root route
         .layer(Extension(shared_pool))
         .layer(auth_layer);
