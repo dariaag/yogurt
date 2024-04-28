@@ -4,14 +4,14 @@ use axum_login::{
     AuthManagerLayerBuilder,
 };
 use dotenv::dotenv;
-
+use heyo::auth::auth::DbBackend;
 use heyo::routes::{self, admin_routes, protected_routes, public_routes, studio_owner_routes};
 use sqlx::postgres::PgPoolOptions;
 use std::{env, sync::Arc};
-use tower::make::Shared;
+use tower::{layer, make::Shared};
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -28,22 +28,31 @@ async fn main() {
         .await
         .expect("Failed to run migrations");
 
+    let session_store = MemoryStore::default();
+    let session_layer = SessionManagerLayer::new(session_store).with_secure(false);
+    let shared_pool = Arc::new(pool);
     println!("Migrations run successfully!");
+    let backend = DbBackend {
+        pool: shared_pool.clone(),
+    };
+    let auth_layer = AuthManagerLayerBuilder::new(backend, session_layer).build();
     // Define app routes
     //let app = app_routes().layer(Extension(shared_pool));
     // Set up the main router and include sub-routers
-    let shared_pool = Arc::new(pool);
+
     let app = Router::new()
         .merge(public_routes::public_routes()) // Merge user-related routes
         .merge(studio_owner_routes::studio_owner_routes()) // Merge studio owner-related routes
         .merge(admin_routes::admin_routes()) // Merge admin-related routes
-        .merge(protected_routes::protected_routes(shared_pool.clone())) // Merge admin-related routes
+        //.merge(protected_routes::protected_routes()) // Merge admin-related routes
         .route("/", get(root_handler)) // Main root route
-        .layer(Extension(shared_pool));
+        .layer(Extension(shared_pool))
+        .layer(auth_layer);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app.into_make_service()).await?;
     // Run the server
-    axum::serve(listener, app).await.unwrap();
+    Ok(())
 }
 /* async fn root() -> &'static str {
     "Hello, world!"

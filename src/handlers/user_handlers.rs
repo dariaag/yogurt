@@ -7,16 +7,19 @@ use axum::{
 use sqlx::PgPool;
 use std::{sync::Arc, vec};
 
-use axum::{debug_handler, routing::get, Router};
-use axum::{response::Redirect, Form};
-
 use crate::{
-    auth::auth::{Credentials, DbBackend},
+    auth::{
+        self,
+        auth::{Credentials, DbBackend},
+    },
     models::{
         studio::Studio,
         user::{NewUser, User},
     },
 };
+use axum::{debug_handler, routing::get, Router};
+use axum::{response::Redirect, Form};
+use axum_login::{AuthUser, AuthnBackend, UserId};
 
 #[debug_handler]
 pub async fn add_user_handler(
@@ -41,6 +44,7 @@ pub async fn login(
 ) -> impl IntoResponse {
     let user = match auth_session.authenticate(creds.clone()).await {
         Ok(Some(user)) => {
+            println!("{:?}", user.session_auth_hash());
             println!("auth");
             user
         }
@@ -51,9 +55,21 @@ pub async fn login(
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     };
 
-    if auth_session.login(&user).await.is_err() {
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-    }
+    // if auth_session.login(&user).await.is_err() {
+    //     return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    // }
+    // println!("Logged in");
 
-    Redirect::to("/protected").into_response()
+    // println!("{:?}", auth_session.user);
+
+    // Redirect::to("/logged_in").into_response()
+
+    auth_session.login(&user).await.unwrap();
+    StatusCode::OK.into_response()
+}
+
+#[debug_handler]
+pub async fn logout(mut auth_session: AuthSession) -> impl IntoResponse {
+    auth_session.logout().await.unwrap();
+    StatusCode::OK.into_response()
 }

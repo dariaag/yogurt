@@ -31,6 +31,7 @@ impl AuthnBackend for DbBackend {
         &self,
         credentials: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
+        println!("CALLING AUTHENTICATE");
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
             .bind(&credentials.user_id)
             .fetch_optional(&*self.pool)
@@ -39,6 +40,7 @@ impl AuthnBackend for DbBackend {
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
+        println!("CALLING GET USER");
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
             .bind(user_id)
             .fetch_optional(&*self.pool)
@@ -63,7 +65,6 @@ impl From<&str> for Permission {
 #[async_trait]
 impl AuthzBackend for DbBackend {
     type Permission = Permission;
-
     async fn get_group_permissions(
         &self,
         user: &Self::User,
@@ -90,15 +91,14 @@ impl AuthzBackend for DbBackend {
         user: &Self::User,
         perm: Self::Permission,
     ) -> Result<bool, Self::Error> {
+        println!("{:?}", user.id);
+        println!("{:?}", perm.name);
         let has_perm = sqlx::query_scalar(
             r#"
-            select exists (
-                select 1
-                from users
-                join users_groups on users.id = users_groups.user_id
-                join groups_permissions on users_groups.group_id = groups_permissions.group_id
-                join permissions on groups_permissions.permission_id = permissions.id
-                where users.id = ? and permissions.name = ?
+            SELECT EXISTS (
+                SELECT 1
+                FROM users
+                WHERE id = $1 AND role = $2
             )
             "#,
         )
